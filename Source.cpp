@@ -12,12 +12,12 @@ typedef std::vector<std::vector<double>> Matrix;
 
 void read_file(Matrix& space)
 {
-	char name[1000] = { "input.txt" };
+	char name[1000] = { "test1.txt" };
 	std::ifstream in;
 	in.open(name);
 	if (!in.is_open())
 	{
-		cout << "Sorry :(";
+		std::cout << "Sorry :(";
 	}
 	else
 	{
@@ -105,7 +105,7 @@ void poisson_1D_withzero(Matrix& space, Matrix& in, Matrix& out, double p1, doub
 	{
 		for (int j = 0; j < m; j++)
 		{
-			out[i][j] = -out[i][j] + 2 / (hx*hy)*in[i][j];
+			out[i][j] = -out[i][j] + (2 / (hx*hy))*in[i][j];
 		}
 	}
 }
@@ -123,30 +123,6 @@ void poisson(Matrix& space, Matrix& in, Matrix& out, double p1, double p2, doubl
 			{
 				continue;
 			}
-			/*else if (space[i][j] == 1 && j == 0 && i == 0)
-			{
-				out[i][j] = (in[i][j + 1] - 2 * in[i][j] + p1) / (hy*hy);
-			}
-			else if (space[i][j] == 1 && i == 0 && j != 0 && j != (m - 1))
-			{
-				out[i][j] = (in[i][j + 1] - 2 * in[i][j] + in[i][j - 1]) / (hy*hy);
-			}
-			else if (space[i][j] == 1 && j == (m - 1))
-			{
-				out[i][j]=(p2 - 2 * in[i][j] + in[i][j - 1]) / (hy*hy);
-			}
-			else if (space[i][j] == 1 && j == 0 && space[i + 1][j] == 0 && space[i - 1][j] == 0)
-			{
-				out[i][j] = (in[i][j + 1] - 2 * in[i][j] + p1) / (hy*hy);
-			}
-			else if (space[i][j] == 1 && space[i + 1][j] == 0 && space[i - 1][j] == 0 && j != 0 && j != (m - 1))
-			{
-				out[i][j] = (in[i][j + 1] - 2 * in[i][j] + in[i][j - 1]) / (hy*hy);
-			}
-			else if (space[i][j] == 1 && j == (m - 1) && space[i + 1][j] == 0 && space[i - 1][j] == 0)
-			{
-				out[i][j] = (p2 - 2 * in[i][j] + in[i][j - 1]) / (hy*hy);
-			}*/
 			else if (space[i][j] == 1 && j == 0 && space[i - 1][j] == 0 )
 			{
 				//first
@@ -206,10 +182,88 @@ void poisson(Matrix& space, Matrix& in, Matrix& out, double p1, double p2, doubl
 	{
 		for (int j = 0; j < m; j++)
 		{
-			out[i][j] = -out[i][j] + 2 / (hx*hy)*in[i][j];
+			out[i][j] = -out[i][j] + (2 / (hx*hy))*in[i][j];
 		}
 	}
 }
+
+void A_poisson(Matrix& space, Matrix& in, Matrix& out, double p1, double p2, double hx, double hy)
+{
+	int n = in.size();
+	int m = in[0].size();
+
+	for (int i = 0; i < n; i++)
+	{
+		for (int j = 0; j < m; j++)
+		{
+			if (space[i][j] == 0)
+			{
+				continue;
+			}
+			else if (space[i][j] == 1 && j == 0 && space[i - 1][j] == 0)
+			{
+				//first
+				out[i][j] = /*(in[i + 1][j] - in[i][j]) / (hx*hx) +*/ (in[i][j + 1] - 2 * in[i][j] + p1) / (hy*hy);
+			}
+			else if (space[i][j] == 1 && j == (m - 1) && space[i - 1][j] == 0)
+			{
+				//second
+				out[i][j] = /*(in[i + 1][j] - in[i][j]) / (hx*hx) +*/(p2 - 2 * in[i][j] + in[i][j - 1]) / (hy*hy);
+			}
+			else if (space[i][j] == 1 && j == 0 && space[i + 1][j] == 0)
+			{
+				//third
+				out[i][j] = /*(in[i - 1][j] - in[i][j]) / (hx*hx) +*/(in[i][j + 1] - 2 * in[i][j] + p1) / (hy*hy);
+			}
+			else if (space[i][j] == 1 && j == (m - 1) && space[i + 1][j] == 0)
+			{
+				//fourth
+				out[i][j] = /*(in[i - 1][j] - in[i][j]) / (hx*hx) +*/(p2 - 2 * in[i][j] + in[i][j - 1]) / (hy*hy);
+			}
+			else if (space[i][j] == 1 && j == 0)
+			{
+				//dirichlet-right
+				out[i][j] = /*(in[i + 1][j] - 2 * in[i][j] + in[i - 1][j]) / (hx*hx) +*/(in[i][j + 1] - 2 * in[i][j] + p1) / (hy*hy);
+			}
+			else if (space[i][j] == 1 && j == (m - 1))
+			{
+				//dirichlet-left
+				out[i][j] = /*(in[i + 1][j] - 2 * in[i][j] + in[i - 1][j]) / (hx*hx) +*/(p2 - 2 * in[i][j] + in[i][j - 1]) / (hy*hy);
+			}
+			else if (space[i][j] == 1 && space[i - 1][j] == 0 && j != 0 && j != (m - 1))
+			{
+				//top-neiman
+				out[i][j] = /*(in[i + 1][j] - in[i][j]) / (hx*hx) +*/(in[i][j + 1] - 2 * in[i][j] + in[i][j - 1]) / (hy*hy);
+			}
+			else if (space[i][j] == 1 && space[i + 1][j] == 0 && j != 0 && j != (m - 1))
+			{
+				//bottom-neiman
+				out[i][j] = /*(in[i - 1][j] - in[i][j]) / (hx*hx) +*/(in[i][j + 1] - 2 * in[i][j] + in[i][j - 1]) / (hy*hy);
+			}
+			else if (space[i][j] == 1 && space[i][j + 1] == 0 && i != 0 && i != (n - 1))
+			{
+				//left-neiman
+				out[i][j] = /*(in[i + 1][j] - 2 * in[i][j] + in[i - 1][j]) / (hx*hx) +*/(in[i][j - 1] - in[i][j]) / (hy*hy);
+			}
+			else if (space[i][j] == 1 && space[i][j - 1] == 0 && i != 0 && i != (n - 1))
+			{
+				out[i][j] = /*(in[i + 1][j] - 2 * in[i][j] + in[i - 1][j]) / (hx*hx) +*/(in[i][j + 1] - in[i][j]) / (hy*hy);
+			}
+			else if (space[i][j] == 1 && space[i - 1][j] == 1 && space[i + 1][j] == 1 && space[i][j - 1] == 1 && space[i][j + 1] == 1 && j != 0 && j != (m - 1))
+			{
+				out[i][j] = /*(in[i + 1][j] - 2 * in[i][j] + in[i - 1][j]) / (hx*hx) +*/(in[i][j + 1] - 2 * in[i][j] + in[i][j - 1]) / (hy*hy);
+			}
+		}
+	}
+	for (int i = 0; i < n; i++)
+	{
+		for (int j = 0; j < m; j++)
+		{
+			out[i][j] = -out[i][j] + (2 / (hx*hy))*in[i][j];
+		}
+	}
+}
+
 
 void Resize(Matrix& A, int n, int m)
 {
@@ -259,12 +313,12 @@ void min_nev(Matrix& space, Matrix& x, Matrix& rhs, int n, int m, double p11, do
 {
 	double rescure = 1e5;
 	int ii = 0;
-	double error = 1e-1;
+	double error = 1e-2;
 	double tau = 0.0;
 	do {
 		Matrix x1;
 		Resize(x1, n, m);
-		poisson(space, x, x1, p11, p22, hx, hy);
+		A_poisson(space, x, x1, p11, p22, hx, hy);
 		Matrix r;
 		Resize(r, n, m);
 		for (int i = 0; i < n; i++)
@@ -277,7 +331,7 @@ void min_nev(Matrix& space, Matrix& x, Matrix& rhs, int n, int m, double p11, do
 		rescure = norm(r);
 		Matrix rr1;
 		Resize(rr1, n, m);
-		poisson(space, r, rr1, p11, p22, hx, hy);
+		A_poisson(space, r, rr1, p11, p22, hx, hy);
 		tau = mlt(rr1, r) / (mlt(rr1, rr1));
 		if (ii == 1)
 		{
@@ -314,7 +368,7 @@ void gmres(Matrix& space, Matrix& x, Matrix& rhs, int n, int m, double p1, doubl
 	do {
 		Matrix x1;
 		Resize(x1, n, m);
-		poisson(space, x, x1, p1, p2, hx, hy);
+		A_poisson(space, x, x1, p1, p2, hx, hy);
 		Matrix r;
 		Resize(r, n, m);
 		for (int i = 0; i < n; i++)
@@ -327,7 +381,7 @@ void gmres(Matrix& space, Matrix& x, Matrix& rhs, int n, int m, double p1, doubl
 		rescure = norm(r);
 		Matrix rr1;
 		Resize(rr1, n, m);
-		poisson(space, r, rr1, p1, p2, hx, hy);
+		A_poisson(space, r, rr1, p1, p2, hx, hy);
 		double tau = mlt(r, r) / (mlt(rr1, r));
 		for (int i = 0; i < n; i++)
 		{
@@ -514,71 +568,15 @@ void min_vect(Matrix& space, std::vector<double>x, std::vector<double>rhs, doubl
 	std::cout << "it = " << ii << endl;
 	std::cout << "norm = " << error << endl;
 }
+/*=======================================================================*/
 
-void simple_iterations(Matrix& space, Matrix& x0, Matrix& rhs, double t0, double p0, double p1, double p2, double hx, double hy)
-{
-	int n = space.size();
-	int m = space[0].size();
-	Matrix Ax;
-	Resize(Ax, n, m);
-
-	poisson(space, x0, Ax, p1, p2, hx, hy);
-	Matrix r;
-	Resize(r, n, m);
-	for (int i = 0; i < n; i++)
-	{
-		for (int j = 0; j < m; j++)
-		{
-			r[i][j] = rhs[i][j] - Ax[i][j];
-		}
-	}
-
-	Matrix x;
-	Resize(x, n, m);
-	double error = norm(r);
-	double eps = 1e-2;
-	//int endCycle = 1000;
-	int it = 0;
-	while (error > eps) //&& it < endCycle)
-	{
-		it++;
-		poisson(space, x0, Ax, p1, p2, hx, hy);
-		for (int i = 0; i < n; i++)
-		{
-			for (int j = 0; j < m; j++)
-			{
-				x[i][j] = x0[i][j] - t0 * (Ax[i][j]-rhs[i][j]);
-			}
-		}
-
-		for (int i = 0; i < n; i++)
-		{
-			for (int j = 0; j < m; j++)
-			{
-				r[i][j] = rhs[i][j] - Ax[i][j];
-			}
-		}
-		error = norm(r);
-		for (int i = 0; i < n; i++)
-		{
-			for (int j = 0; j < m; j++)
-			{
-				x0[i][j] = x[i][j];
-			}
-		}
-	}
-	std::cout << "simple_iteration" << endl;
-	cout << "iterations = " << it << endl;
-	std::cout << "error = " << error << std::endl;
-	std::cout << endl;
-}
 
 void gmresnew(Matrix& space, Matrix& x0, Matrix& rhs, int n,int m, double p1, double p2, double hx, double hy)
 {
 	Matrix Ax; 
 	Resize(Ax, n, m);
 
-	poisson(space, x0, Ax, p1, p2, hx, hy);
+	A_poisson(space, x0, Ax, p1, p2, hx, hy);
 	Matrix r;
 	Resize(r, n, m);
 	for (int i = 0; i < n; i++)
@@ -598,11 +596,11 @@ void gmresnew(Matrix& space, Matrix& x0, Matrix& rhs, int n,int m, double p1, do
 	while (error > eps) //&& it < endCycle)
 	{
 		it++;
-		poisson(space, x0, Ax, p1, p2, hx, hy);
+		A_poisson(space, x0, Ax, p1, p2, hx, hy);
 
 		Matrix Ar;
 		Resize(Ar, n, m);
-		poisson(space, r, Ar, p1, p2, hx, hy);
+		A_poisson(space, r, Ar, p1, p2, hx, hy);
 		
 		if (mlt(Ar, r) != 0.0)
 		{
@@ -693,7 +691,15 @@ void minnev(Matrix& space, Matrix& x0, Matrix& rhs, int n, int m, double p1, dou
 		{
 			for (int j = 0; j < m; j++)
 			{
-				x[i][j] = x0[i][j] - tau * (Ax[i][j] - rhs[i][j]);
+				if (tau > 0.0)
+				{
+					x[i][j] = x0[i][j] - tau * (Ax[i][j] - rhs[i][j]);
+				}
+				else
+				{
+					x[i][j] = x0[i][j] + tau * (Ax[i][j] - rhs[i][j]);
+				}
+				
 			}
 		}
 		for (int i = 0; i < n; i++)
@@ -713,10 +719,340 @@ void minnev(Matrix& space, Matrix& x0, Matrix& rhs, int n, int m, double p1, dou
 		}
 	}
 	std::cout << "minnev2" << endl;
-	cout << "iterations = " << it << endl;
+	std::cout << "iterations = " << it << endl;
 	std::cout << "error = " << error << std::endl;
 	std::cout << "tau = " << tau << endl;
 	std::cout << endl;
+}
+
+/*void minres_saad(Matrix& space, Matrix& x, Matrix& rhs, double p1, double p2, double hx, double hy)
+{
+	int n = space.size();
+	int m = space[0].size();
+
+	Matrix Ax;
+	Resize(Ax, n, m);
+	poisson(space, x, Ax, p1, p2, hx, hy);
+
+	Matrix r;
+	Resize(r, n, m);
+	for (int i = 0; i < n; i++)
+	{
+		for (int j = 0; j < m; j++)
+		{
+			if (space[i][j] == 1)
+			{
+				r[i][j] = rhs[i][j]- Ax[i][j];
+			}
+		}
+	}
+	double error;// = norm(r);
+
+	Matrix Ar;
+	Resize(Ar, n, m);
+	poisson(space, r, Ar, p1, p2, hx, hy);
+
+	double eps = 1e-2;
+	double tau;
+	int it = 0;
+	do
+	{
+		it++;
+		tau = mlt(Ar, r) / (mlt(Ar, Ar));
+		//tau = abs(tau);
+		for (int i = 0; i < n; i++)
+		{
+			for (int j = 0; j < m; j++)
+			{
+				if (space[i][j] == 1)
+				{
+					x[i][j] = x[i][j] - tau * r[i][j];
+					r[i][j] = r[i][j] + tau * Ar[i][j];
+				}
+			}
+		}
+		poisson(space, r, Ar, p1, p2, hx, hy);
+		error = norm(r);
+	} while (error > eps);
+	std::cout << "min_res_saad" << endl;
+	std::cout << "it = " << it<< endl;
+	std::cout << "norm of res = " << error << endl;
+	std::cout << endl;
+}*/
+
+void Dpoisson(Matrix& space, Matrix& in, Matrix& out, double p1, double p2, double hx, double hy)
+{
+	int n = space.size();
+	int m = space[0].size();
+
+	for (int i = 0; i < n; i++)
+	{
+		for(int j = 0; j < m; j++)
+		{
+			if (space[i][j] == 0)
+			{
+				continue;
+			}
+			else if (space[i][j] == 1 && j == 0)
+			{
+				out[i][j] = (2 * in[i][j] - in[i][j + 1]) / (hx*hx);
+			}
+			else if (space[i][j] == 1 && j != 0 && j != (m - 1))
+			{
+				out[i][j] = (-in[i][j - 1] + 2 * in[i][j] - in[i][j+1]) / (hx*hx);
+			}
+			else if (space[i][j] == 1 && j == (m - 1))
+			{
+				out[i][j] = (-in[i][j - 1] + 2 * in[i][j]) / (hx*hx);
+			}
+		}
+	}
+
+	/*for (int i = 0; i < n; i++)
+	{
+		for (int j = 0; j < m; j++)
+		{
+			out[i][j] += 2 * in[i][j] / (hx*hx);
+		}
+	}*/
+
+}
+
+void DDpoisson(Matrix& space, Matrix& in, Matrix& out, double p1, double p2, double hx, double hy)
+{
+	int n = space.size();
+	int m = space[0].size();
+
+	for (int i = 0; i < n; i++)
+	{
+		for (int j = 0; j < m; j++)
+		{
+			if (space[i][j] == 0)
+			{
+				continue;
+			}
+			//top
+			else if (space[i][j] == 1 && space[i - 1][j] == 0 && j == 0)
+			{
+				out[i][j]= (2 * in[i][j] - in[i][j + 1]) / (hx*hx) + (in[i][j] - in[i + 1][j]) / (hy*hy);
+			}
+			else if (space[i][j] == 1 && space[i - 1][j] == 0 && j != 0 && j != (m-1))
+			{
+				out[i][j] = (-in[i][j - 1] + 2 * in[i][j] - in[i][j + 1]) / (hx*hx) + (in[i][j] - in[i + 1][j]) / (hy*hy);
+			}
+			else if (space[i][j] == 1 && space[i - 1][j] == 0 && j == (m - 1))
+			{
+				out[i][j] = (-in[i][j - 1] + 2 * in[i][j]) / (hx*hx) + (in[i][j] - in[i + 1][j] )/ (hy*hy);
+			}
+			//inside
+			else if (space[i][j] == 1 && j == 0 && space[i+1][j] == 1 &&space[i-1][j]==1)
+			{
+				out[i][j] = (2 * in[i][j] - in[i][j + 1]) / (hx*hx) + (-in[i - 1][j] + 2 * in[i][j] - in[i + 1][j])/(hy*hy);
+			}
+			else if (space[i][j] == 1 && j != 0 && j != (m - 1) && space[i + 1][j] == 1 && space[i - 1][j] == 1)
+			{
+				out[i][j] = (-in[i][j - 1] + 2 * in[i][j] - in[i][j + 1]) / (hx*hx) + (-in[i - 1][j] + 2 * in[i][j] - in[i + 1][j]) / (hy*hy);
+			}
+			else if (space[i][j] == 1 && j == (m - 1) && space[i + 1][j] == 1 && space[i - 1][j] == 1)
+			{
+				out[i][j] = (-in[i][j - 1] + 2 * in[i][j]) / (hx*hx) + (-in[i - 1][j] + 2 * in[i][j] - in[i + 1][j]) / (hy*hy);
+			}
+			//bottom
+			else if (space[i][j] == 1 && space[i + 1][j] == 0 && j == 0)
+			{
+				out[i][j] = (2 * in[i][j] - in[i][j + 1]) / (hx*hx) + (-in[i - 1][j] + in[i][j]) / (hy*hy);
+			}
+			else if (space[i][j] == 1 && space[i + 1][j] == 0 && j != 0 && j != (m - 1))
+			{
+				out[i][j]= (-in[i][j - 1] + 2 * in[i][j] - in[i][j + 1]) / (hx*hx) + (-in[i - 1][j] + in[i][j]) / (hy*hy);
+			}
+			else if (space[i][j] == 1 && space[i + 1][j] == 0 && j == (m - 1))
+			{
+				out[i][j]= (-in[i][j - 1] + 2 * in[i][j]) / (hx*hx) + (-in[i - 1][j] + in[i][j]) / (hy*hy);
+			}
+		}
+	}
+
+	/*for (int i = 0; i < n; i++)
+	{
+		for (int j = 0; j < m; j++)
+		{
+			out[i][j] += 2 * in[i][j] / (hx*hy);
+		}
+	}*/
+
+}
+
+void simple_iterations(Matrix& space, Matrix& x0, Matrix& rhs, double t0, double p0, double p1, double p2, double hx, double hy)
+{
+	int n = space.size();
+	int m = space[0].size();
+	Matrix Ax;
+	Resize(Ax, n, m);
+
+	Dpoisson(space, x0, Ax, p1, p2, hx, hy);
+	Matrix r;
+	Resize(r, n, m);
+	for (int i = 0; i < n; i++)
+	{
+		for (int j = 0; j < m; j++)
+		{
+			r[i][j] = rhs[i][j] - Ax[i][j];
+		}
+	}
+
+	Matrix x;
+	Resize(x, n, m);
+	double error = norm(r);
+	double eps = 1e-3;
+	//int endCycle = 1000;
+	int it = 0;
+	while (error > eps) //&& it < endCycle)
+	{
+		it++;
+		Dpoisson(space, x0, Ax, p1, p2, hx, hy);
+		for (int i = 0; i < n; i++)
+		{
+			for (int j = 0; j < m; j++)
+			{
+				x[i][j] = x0[i][j] - t0 * (Ax[i][j] - rhs[i][j]);
+			}
+		}
+
+		for (int i = 0; i < n; i++)
+		{
+			for (int j = 0; j < m; j++)
+			{
+				r[i][j] = rhs[i][j] - Ax[i][j];
+			}
+		}
+		error = norm(r);
+		for (int i = 0; i < n; i++)
+		{
+			for (int j = 0; j < m; j++)
+			{
+				x0[i][j] = x[i][j];
+			}
+		}
+	}
+	std::cout << "simple_iteration" << endl;
+	cout << "iterations = " << it << endl;
+	std::cout << "error = " << error << std::endl;
+	std::cout << endl;
+}
+
+void gmres_saad(Matrix& space, Matrix& x, Matrix& rhs,double p1, double p2, double hx, double hy )
+{
+	int n = space.size();
+	int m = space[0].size();
+
+	Matrix Ax;
+	Resize(Ax, n, m);
+	DDpoisson(space, x, Ax, p1, p2, hx, hy);
+
+	Matrix r;
+	Resize(r, n, m);
+	for (int j = 0; j < m; j++)
+	{
+		for (int i = 0; i < n; i++)
+		{
+			r[i][j] = rhs[i][j] - Ax[i][j];
+		}
+	}
+	Matrix p;
+	Resize(p, n, m);
+	p = r;
+
+	Matrix q;
+	Resize(q, n, m);
+	//Dpoisson(space, r, p, p1, p2, hx, hy);
+	
+	double error = norm(r);
+	double eps = 1e-3;
+	int it = 0;
+	while (error > eps)
+	{
+		it++;
+		DDpoisson(space, p, q, p1, p2, hx, hy);
+		double tau = mlt(p, r) / (mlt(p, q));
+		//std::cout << "tau = " << tau << endl;
+		for (int j = 0; j < m; j++)
+		{
+			for (int i = 0; i < n; i++)
+			{
+				x[i][j] += tau * p[i][j];
+			}
+		}
+		for (int j = 0; j < m; j++)
+		{
+			for (int i = 0; i < n; i++)
+			{
+				r[i][j] -= tau * q[i][j];
+			}
+		}
+		p = r;
+		error = norm(r);
+	}
+	std::cout << "gmres_saad " << endl;
+	std::cout << "error =  " <<error<< endl;
+	std::cout << "it = " << it << endl;
+}
+
+void minres_saad(Matrix& space, Matrix& x, Matrix& rhs, double p1, double p2, double hx, double hy)
+{
+	int n = space.size();
+	int m = space[0].size();
+
+	Matrix Ax;
+	Resize(Ax, n, m);
+	DDpoisson(space, x, Ax, p1, p2, hx, hy);
+
+	Matrix r;
+	Resize(r, n, m);
+	for (int j = 0; j < m; j++)
+	{
+		for (int i = 0; i < n; i++)
+		{
+			r[i][j] = rhs[i][j] - Ax[i][j];
+		}
+	}
+	Matrix p;
+	Resize(p, n, m);
+	p = r;
+
+	Matrix q;
+	Resize(q, n, m);
+	//Dpoisson(space, r, p, p1, p2, hx, hy);
+
+	double error = norm(r);
+	double eps = 1e-3;
+	int it = 0;
+	while (error > eps)
+	{
+		it++;
+		DDpoisson(space, p, q, p1, p2, hx, hy);
+		double tau = mlt(q, p) / (mlt(q, q));
+		//std::cout << "tau = " << tau << endl;
+		for (int j = 0; j < m; j++)
+		{
+			for (int i = 0; i < n; i++)
+			{
+				x[i][j] += tau * p[i][j];
+			}
+		}
+		for (int j = 0; j < m; j++)
+		{
+			for (int i = 0; i < n; i++)
+			{
+				r[i][j] -= tau * q[i][j];
+			}
+		}
+		p = r;
+		error = norm(r);
+	}
+	std::cout << "min_nev_saad " << endl;
+	std::cout << "error =  " << error << endl;
+	std::cout << "it = " << it << endl;
 }
 
 int main()
@@ -742,24 +1078,48 @@ int main()
 	std::cout << "n = " << n << endl;
 	std::cout << "m = " << m << endl;
 
+	double p11 = 8.0;
+	double p22 = 6.0;
+
 	Matrix rhs;
 	Resize(rhs, n, m);
 
-	double p11 = 8.0;
-	double p22 = 6.0;
+	for (int i = 0; i < n; i++)
+	{
+		for (int j = 0; j < m; j++)
+		{
+			if (space[i][j] == 0)
+			{
+				continue;
+			}
+			else if (space[i][j] == 1 && j == 0)
+			{
+				rhs[i][j] = p11/(hx*hx);
+			}
+			else if (space[i][j] == 1 && j == (m - 1))
+			{
+				rhs[i][j] = p22/(hx*hx);
+			}
+		}
+	}
+
 
 	Matrix x;
 	Resize(x, n, m);
 
-	minnev(space, x, rhs, n, m, p11, p22, hy, hx);
+	simple_iterations(space, x, rhs, 0.01, 0.01, p11, p22, hy, hx);
+	//gmres_saad(space, x, rhs, p11, p22, hx, hy);
+
+	/*minres_saad(space, x, rhs, p11, p22, hy, hx);
+	minnev(space, x, rhs, n, m, p11, p22, hy, hx);*/
 
 	Matrix x3;
 	Resize(x3, n, m);
-	gmresnew(space, x3, rhs, n, m, p11, p22, hy, hx);
+	//minres_saad(space, x3, rhs, p11, p22, hx, hy);
 
-	Matrix x4;
+	/*Matrix x4;
 	Resize(x4, n, m);
-	simple_iterations(space, x4, rhs, 0.0025, 0.0025, p11, p22, hy, hx);
+	simple_iterations(space, x4, rhs, 0.01, 0.01, p11, p22, hy, hx);
 	/*std::vector<double>x2;
 	x2.resize(n*m);
 	std::vector<double>rhs_vect;
